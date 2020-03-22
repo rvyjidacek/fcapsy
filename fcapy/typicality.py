@@ -1,57 +1,70 @@
 from itertools import starmap
 from itertools import combinations_with_replacement
 from itertools import compress
+from .decorators import info
+import math
 
 
-def _find_zero_attributes(objects):
-    result = objects[0]
+# def _find_zero_items(items):
+#     if not items:
+#         return 0
 
-    for row in objects[1:]:
-        result |= row
+#     result = items[0]
 
-    return objects[0].fromint(result).complement()
+#     for row in items[1:]:
+#         result |= row
 
-
-def typicality_avg(obj, concept, context, similarity_function, remove_zeros=False, remove_intent=False):
-    concept_objects = list(compress(context.rows, concept.extent.bools()))
-
-    attributes_to_remove = context._Attributes.infimum
-
-    if remove_zeros:
-        attributes_to_remove |= _find_zero_attributes(concept_objects)
-        attributes_to_remove = context._Attributes.fromint(
-            attributes_to_remove)
-
-    if remove_intent:
-        attributes_to_remove |= concept.intent
-        attributes_to_remove = context._Attributes.fromint(
-            attributes_to_remove)
-
-    suma = sum(map(lambda x: similarity_function(
-        obj, x, attributes_to_remove), concept_objects))
-
-    return suma / len(concept.extent)
+#     return items[0].fromint(result).complement()
 
 
-def typicality_min(obj, concept, context, similarity_function, remove_zeros=False, remove_intent=False):
-    concept_objects = list(compress(context.rows, concept.extent.bools()))
+# def _typicality_helper(item, remove_zeros, remove_definition_items):
+#     type(item) is context._Attributes:
+#         # Calculating typicality for Objects
 
-    attributes_to_remove = context._Attributes.infimum
+#     elif type(item) is context._Objects:
+#         # Calculating typicality for Attributes
 
-    if remove_zeros:
-        attributes_to_remove |= _find_zero_attributes(concept_objects)
-        attributes_to_remove = context._Attributes.fromint(
-            attributes_to_remove)
+#     items_to_remove = item.infimum
 
-    if remove_intent:
-        attributes_to_remove |= concept.intent
-        attributes_to_remove = context._Attributes.fromint(
-            attributes_to_remove)
+#     if remove_zeros:
+#         items_to_remove |= _find_zero_items(items)
+#         items_to_remove = item.fromint(
+#             items_to_remove)
 
-    minimum = min(
-        map(lambda x: similarity_function(obj, x, attributes_to_remove), concept_objects))
+#     if remove_definition_items:
+#         items_to_remove |=
+#         items_to_remove = item.fromint(
+#             items_to_remove)
 
-    return minimum
+#     return items, items_to_remove
+
+# typ(item, items, context, similarity_measure)
+
+
+def _calculate_similarities(item, items_to_compare, similarity_function):
+    return map(lambda other: similarity_function(item, other), items_to_compare)
+
+
+@info('Typ⌀')
+def typicality_avg(item, items_to_compare, similarity_function):
+    if type(item) is not type(items_to_compare[0]):
+        raise ValueError("Wrong type of items!")
+
+    similarities = _calculate_similarities(
+        item, items_to_compare, similarity_function)
+
+    return sum(similarities) / len(items_to_compare)
+
+
+@info('Typ⋀')
+def typicality_min(item, items_to_compare, similarity_function):
+    if type(item) is not type(items_to_compare[0]):
+        raise ValueError("Wrong type of items!")
+
+    similarities = _calculate_similarities(
+        item, items_to_compare, similarity_function)
+
+    return min(similarities)
 
 
 def _calculate_weights(objects):
@@ -59,9 +72,22 @@ def _calculate_weights(objects):
     return [sum(y) for y in zip(*objects)]
 
 
-def typicality_rosch(obj, concept, context):
-    concept_objects = list(compress(context.rows, concept.extent.bools()))
+@info('Rosch')
+def typicality_rosch(item, items_to_compare):
+    if type(item) is not type(items_to_compare[0]):
+        raise ValueError("Wrong type of items!")
 
-    weights = _calculate_weights(concept_objects)
+    weights = _calculate_weights(items_to_compare)
 
-    return sum(compress(weights, obj.bools()))
+    return sum(compress(weights, item.bools()))
+
+
+@info('Rosch ln')
+def typicality_rosch_ln(item, items_to_compare):
+    if type(item) is not type(items_to_compare[0]):
+        raise ValueError("Wrong type of items!")
+
+    weights = _calculate_weights(items_to_compare)
+    weights = map(lambda x: math.log(x) if x != 0 else -math.inf, weights)
+
+    return sum(compress(weights, item.bools()))

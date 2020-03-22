@@ -1,3 +1,6 @@
+from itertools import compress
+
+
 class Context:
     def __init__(self, matrix, Objects, Attributes):
         self.rows = tuple(map(Attributes.frombools, matrix))
@@ -11,6 +14,15 @@ class Context:
 
     def down(self, attributes):
         return self.__arrow_operator(attributes, self.columns, self._Objects)
+
+    def get_bools(self):
+        return tuple(map(self._Attributes.bools, self.rows))
+
+    def filter_rows_by_extent(self, extent):
+        return tuple(compress(self.rows, extent.bools()))
+
+    def filter_columns_by_intent(self, intent):
+        return tuple(compress(self.columns, intent.bools()))
 
     def __arrow_operator(self, input_set, data, ResultClass):
         result = ResultClass.supremum
