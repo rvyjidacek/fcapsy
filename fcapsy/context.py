@@ -2,6 +2,7 @@ import csv
 import random
 from typing import Type, Tuple, Iterator
 from itertools import compress
+import itertools
 
 from bitsets.bases import BitSet
 from bitsets import bitset
@@ -11,6 +12,7 @@ class Context:
     def __init__(self, matrix: list, objects_labels: list, attributes_labels: list, name: str = None):
         self.Objects = bitset('Objects', objects_labels)
         self.Attributes = bitset('Attributes', attributes_labels)
+        # self.CartesianProduct = bitset("CartesianProduct", range(0, len(objects_labels) * len(attributes_labels)))
 
         self.rows = tuple(map(self.Attributes.frombools, matrix))
         self.columns = tuple(map(self.Objects.frombools, zip(*matrix)))
@@ -135,3 +137,28 @@ class Context:
 
     def down(self, attributes: Type[BitSet]) -> Type[BitSet]:
         return self.__arrow_operator(attributes, self.columns, self.Objects)
+
+    # def index_of_tuple(self, t: tuple) -> int:
+    #     return (t[0] * len(self.columns)) + t[1]
+    #
+    # def tuple_for_index(self, index: int):
+    #     row = int(index / len(self.columns))
+    #     col = int(index - (row * len(self.columns)))
+    #     return row, col
+    #
+    # def tuples(self) -> Type[BitSet]:
+    #     tuples = self.CartesianProduct.infimum
+    #
+    #     for obj in range(len(self.rows)):
+    #         for attribute, is_presented in enumerate(self.rows[obj].bools()):
+    #             if is_presented:
+    #                 tuples |= 2 ** self.index_of_tuple((obj, attribute))
+    #     return self.CartesianProduct.fromint(tuples)
+    #
+    # def tuples_for_concept(self, concept) -> Type[BitSet]:
+    #     cartesian_product = self.CartesianProduct.infimum
+    #
+    #     for obj, attr in itertools.product(concept.extent.iter_set(), concept.intent.iter_set()):
+    #         cartesian_product |= 2 ** self.index_of_tuple((obj, attr))
+    #
+    #     return self.CartesianProduct.fromint(cartesian_product)
